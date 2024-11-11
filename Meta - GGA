@@ -1,0 +1,48 @@
+import numpy as np
+
+# 함수 정의: 밀도의 라플라시안과 기울기 계산
+def calculate_gradients(rho, dx, dy):
+    """ 2D 그리드에서 밀도 기울기 및 라플라시안 계산 """
+    grad_rho_x = np.gradient(rho, dx, axis=0)
+    grad_rho_y = np.gradient(rho, dy, axis=1)
+    lap_rho = np.gradient(grad_rho_x, dx, axis=0) + np.gradient(grad_rho_y, dy, axis=1)
+    
+    return grad_rho_x, grad_rho_y, lap_rho
+
+# 교환-상관 에너지 밀도 함수 (Meta-GGA)
+def meta_gga_energy(rho, grad_rho_x, grad_rho_y, lap_rho, a=1.0, b=1.0):
+    """
+    Meta-GGA 교환-상관 에너지 밀도를 계산하는 함수
+    :param rho: 밀도
+    :param grad_rho_x: 밀도 기울기 (x 방향)
+    :param grad_rho_y: 밀도 기울기 (y 방향)
+    :param lap_rho: 밀도 라플라시안
+    :param a, b: 상수 (모델에 따라 다를 수 있음)
+    :return: 교환-상관 에너지 밀도
+    """
+    # 밀도 기울기와 라플라시안을 기반으로 보정 함수 f(rho, grad_rho)
+    grad_rho_squared = grad_rho_x**2 + grad_rho_y**2
+    correction_term = a * (grad_rho_squared / rho) + b * (lap_rho / rho)
+    
+    # 교환-상관 에너지 밀도 계산 (LDA + 보정 함수)
+    lda_energy = -3.0 / (4.0 * np.pi) * (3.0 * np.pi**2 * rho)**(1.0/3.0)  # LDA 교환-상관 에너지
+    xc_energy = lda_energy + correction_term  # LDA 에너지 + 보정 항
+    
+    return xc_energy
+
+# 테스트: 2D 격자에 대해 계산하기
+nx, ny = 100, 100  # 격자 크기
+dx, dy = 0.1, 0.1  # 격자 간격
+
+# 간단한 밀도 분포 예시 (중앙에 높은 밀도)
+rho = np.zeros((nx, ny))
+rho[nx//2 - 10:nx//2 + 10, ny//2 - 10:ny//2 + 10] = 1.0  # 중앙에 높은 밀도
+
+# 밀도 기울기 및 라플라시안 계산
+grad_rho_x, grad_rho_y, lap_rho = calculate_gradients(rho, dx, dy)
+
+# Meta-GGA 교환-상관 에너지 밀도 계산
+xc_energy = meta_gga_energy(rho, grad_rho_x, grad_rho_y, lap_rho, a=0.5, b=0.3)
+
+# 결과 출력
+print(f"교환-상관 에너지 밀도 (Meta-GGA): \n{xc_energy}")
