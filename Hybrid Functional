@@ -1,3 +1,42 @@
+import numpy as np
+
+# 상수 정의 (예: 물리 상수들)
+alpha = 0.25  # Hartree-Fock 교환 항 가중치
+
+# PBE GGA 교환 함수 (예시)
+def pbe_exchange(rho, grad_rho):
+    # rho: 밀도, grad_rho: 밀도의 기울기
+    # GGA 교환 함수, 여기서는 간단히 근사적으로 사용
+    return -3/4 * (3/np.pi)**(1/3) * rho**(1/3)
+
+# Hartree-Fock 교환 함수
+def hf_exchange(rho, grad_rho):
+    # Hartree-Fock 교환 함수는 밀도에 비례
+    return -1 * np.sqrt(rho)
+
+# Meta-GGA (PBE + HF 교환 항 추가)
+def hybrid_meta_gga(rho, grad_rho):
+    # Meta-GGA 함수: PBE 교환 + HF 교환 항
+    pbe_energy = pbe_exchange(rho, grad_rho)
+    hf_energy = hf_exchange(rho, grad_rho)
+    
+    # Hartree-Fock 교환 항을 추가하는 부분 (alpha는 조정 가능한 파라미터)
+    total_energy = pbe_energy + alpha * hf_energy
+    
+    return total_energy
+
+# 예시로 밀도와 기울기 값 설정
+rho = 1.0  # 밀도 예시
+grad_rho = 0.5  # 밀도의 기울기 예시
+
+# 하이브리드 Meta-GGA 에너지 계산
+total_energy = hybrid_meta_gga(rho, grad_rho)
+
+print(f"하이브리드 Meta-GGA 에너지: {total_energy:.5f} eV")
+
+
+
+
 from ase import Atoms
 from ase.calculators.espresso import Espresso
 from ase.optimize import BFGS
