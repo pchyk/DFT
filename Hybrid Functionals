@@ -1,0 +1,23 @@
+from ase import Atoms
+from ase.calculators.espresso import Espresso
+from ase.optimize import BFGS
+
+# 물 분자 (H2O) 생성
+atoms = Atoms('H2O', positions=[(0, 0, 0), (0, 0, 1), (1, 0, 0)])
+
+# 계산기 설정 (QuantumESPRESSO 사용)
+calc = Espresso(pseudopotentials={'H': 'H.pz-rrkjus_psl.1.0.0.UPF',
+                                  'O': 'O.pz-rrkjus_psl.1.0.0.UPF'},
+                xc='PBE0',  # 하이브리드 함수 PBE0 사용
+                kpts=(1, 1, 1),  # 그리드 포인트 설정
+                tstress=True,  # 응력 계산 여부
+                tprnfor=True)  # 힘 계산 여부
+
+atoms.set_calculator(calc)
+
+# 최적화 진행 (에너지 최소화)
+optimizer = BFGS(atoms)
+optimizer.run(fmax=0.02)  # 최대 힘이 0.02 eV/Å일 때까지 최적화
+
+# 최종 에너지 출력
+print(f"최종 에너지: {atoms.get_total_energy()} eV")
